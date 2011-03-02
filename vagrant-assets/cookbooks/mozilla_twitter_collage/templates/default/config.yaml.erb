@@ -1,0 +1,101 @@
+App:
+    # path    
+    path: /vagrant
+    pathLog: /home/vagrant/logs
+    # url
+    url: http://dev.twitterparty.mozilla.com
+Store:
+    url: http://dev.twitterparty.mozilla.com/store
+    path: /home/vagrant/store
+    filePermissions: 664
+    dirPermissions: 775
+    group: vagrant
+Data:
+    path: /home/vagrant/data
+    filePermissions: 664
+    dirPermissions: 775
+    group: vagrant
+Config:
+    filePermissions: 664
+    group: vagrant
+Twitter:
+    urlSearch: "http://search.twitter.com/search.json"
+    terms: "#marchwish"
+    rpp: 100
+    pageLimit: 30
+    timeout:
+        apiCall: 5
+        imgFile: 1
+Mosaic:
+    logoFile: assets/logo-48x47.png
+    reducedFile: assets/logo-reduced-48x47.png
+    defaultPic: assets/default48x48.png
+    configFile: config/mosaic-48x47.config.php
+    cols: 48
+    rows: 47
+    tileSize: 12
+    colorDepth: 16
+    internalComposite: 0
+Jobs:
+    twitter-search:
+        period: 10
+    image-process:
+        period: 1
+        dbLimit: 100
+        imgLimit: 1000
+    mosaic-build:
+        period: 5
+Cache:
+    enabled: 1
+    TTL:
+        mosaicConfig: 2000 
+        tweetIds: 200
+    servers:
+        - host: localhost
+          port: 11211
+Db:
+    schemaDir: schema
+    databases:
+        - name: twitterparty
+          schemaFile: db.sql
+          defaults: &connectionDefaults
+              host: localhost
+              name: twitterparty
+              user: twitterparty
+              pass: twitterparty
+              client: localhost
+          connections:
+              read: 
+                  <<: *connectionDefaults
+                  mode: _modeRead
+              write:
+                  <<: *connectionDefaults
+                  mode: _modeWrite
+          installConnection:
+              <<: *connectionDefaults
+              name: 
+              mode: _modeWrite
+              user: install
+              pass: install
+UI:
+    gaEnabled: "0"
+    gaId: ""
+    title: "Firefox 4 Twitter Party"
+    keywords: "Mozilla,Firefox, Firefox 4, Collage, Twitter, Tweet"
+    description: "Firefox 4 Twitter Party is a visualization of Firefox 4 activity on Twitter. It is an experiment with exclusively open web tools and technologies."
+    js: 
+        general: "/assets/js/general.js?v=1"
+        config: "/assets/js/config.js?v=1"
+        dashboard: "/assets/js/dashboard.js?v=1"
+    js-config:
+        grid: "/config/grid.js?v=1"
+    css:
+        main: "/assets/css/ftp.css?v=1"
+        mosaic: "/assets/css/mosaic.css?v=1"
+        dashboard: "/assets/css/dashboard.css?v=1"
+    pollLimit: 100
+    resultsLimit: 100
+    options:
+        store_url: http://dev.twitterparty.mozilla.com/store
+
+

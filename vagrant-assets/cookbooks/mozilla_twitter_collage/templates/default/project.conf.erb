@@ -1,0 +1,30 @@
+<VirtualHost *:80>
+
+    ServerName dev.twitterparty.mozilla.com
+    
+    DocumentRoot <%= @node[:vagrant][:directory] %>/public
+    ErrorLog <%= @node[:vagrant][:directory] %>/logs/error_log
+    TransferLog <%= @node[:vagrant][:directory] %>/logs/access_log
+    
+    AddType application/x-httpd-php .php .html
+    
+    DirectoryIndex index.php index.html
+    Options -Indexes
+    
+    RewriteEngine On
+
+    Alias /public/store /home/vagrant/store
+
+    <Directory /home/vagrant/store>
+        AllowOverride all
+        Order allow,deny
+        Allow from all
+    </Directory>
+    
+    <Directory <%= @node[:vagrant][:directory] %>/public>
+        AllowOverride all
+        Order allow,deny
+        Allow from all
+    </Directory>
+
+</VirtualHost>

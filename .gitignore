@@ -1,17 +1,14 @@
-# project files
 .DS_Store
-.settings/
-.buildpath
-.project
-
-# configuration
+.svn
+tmp
+build
+Thumbs.db
+*.bak
+*.pyc
+*.swp
+*.swo
+logs/
+xfers/
+.vagrant
+config/config.php
 config/config.yaml
-config/*.php
-config/mosaic*
-
-# data files (legacy)
-assets/*.php
-
-# store files
-public/store/*
-

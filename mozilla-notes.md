@@ -1,6 +1,7 @@
 # Install notes / questions
 
 * bootstrap.php has hardcoded debug log paths to /var/log/twitterparty/
+    * Need to be able to configure or turn that off
 
 * Where is the /servers/cache/twitter-collage directory location configured? 
     * Is this actually public/store?

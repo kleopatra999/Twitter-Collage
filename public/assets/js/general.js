@@ -87,12 +87,12 @@ var party = party || {};
 		}
 		
 		// Add it to the HTML to draw
-		return '<div class="tile" id="' + position + '" style="background-image:url(data:image/gif;base64,' + tile.imageData + '); left: ' + (index.x*12) + 'px; top: ' + (index.y*12) + 'px;"></div>';
+		return '<div class="tile" id="' + position + '" style="background-image:url(data:image/gif;base64,' + tile.imageData + '); left: ' + (index[0]*12) + 'px; top: ' + (index[1]*12) + 'px;"></div>';
 	}
 	
 	// Draw the Initial Mosaic
 	function initialDraw() {
-		
+
 		// Create an array for the random order
 		var i,
 			f;
@@ -103,8 +103,13 @@ var party = party || {};
 		visible_tiles_random.shuffle();
 		// Calculate the number of frames
 		f = parseInt(total_positions/party.performance.initial_frames_per_second, 10);
+		console.log('total_positions', total_positions);
+		console.log('party.performance.initial_frames_per_second', party.performance.initial_frames_per_second);
+		console.log('f', f);
 		// Calculate the counter increment on each frame
-		counter.increment = parseInt(state.total_tiles/f);
+		counter.increment = parseInt(state.total_tiles/f, 10);
+		console.log('(state.total_tiles', state.total_tiles);
+		console.log('counter.increment', counter.increment);
 		// Start the recursive call for each frame
 		initial_draw_timer = window.setInterval(initialDrawFrame, (1000/party.performance.initial_frames_per_second) );
 	}
@@ -196,16 +201,16 @@ var party = party || {};
 	// First to be called
 	function init() {
 		var bubble;
+		
 		// Check the browser's performance
+		party.performance = party.available_performances.high;
 		if ($.browser.msie) {
-			party.performance = party.available_performances.low;
+			party.performance = party.available_performances.medium;
 		} else if ($.browser.mozilla) {
 			// Remove the download button if this is already firefox >= 4
-			if ($.browser.version >= 4) {
+			if (window.navigator.userAgent.search('Firefox/4') != -1) {
 				$('#download').remove();
 			}
-		} else {
-			party.performance = party.available_performances.high;
 		}
 		
 		// Cache DOM elements
@@ -269,7 +274,7 @@ var party = party || {};
 			startAutoBubble();
 		});
 		// Keep bubble open/hover
-		tile_hover.bind('click', function(){
+		tile_hover.bind('click', function(event){
 			state.keep_bubble_open = true;
 			event.stopPropagation();
 			return false;
@@ -281,7 +286,7 @@ var party = party || {};
 				state.keep_bubble_open = true;
 			}
 			event.stopPropagation();
-			return false;
+			return (event.target.nodeName.toLowerCase() == 'a');
 		});
 	}
 	
@@ -395,8 +400,8 @@ var party = party || {};
 		if (!i) {
 			return;
 		}
-		x = i.x;
-		y = i.y;
+		x = i[0];
+		y = i[1];
 		
 		g = party.mosaic.grid[x][y];
 		if (!g) {
@@ -450,8 +455,7 @@ var party = party || {};
 		tile_hover.attr('src', 'data:image/gif;base64,' + tile.imageData);
 		tile_hover.css({
 			'left': (x*12) + 'px',
-			'top': (y*12) + 'px',
-			'border-color': 'rgb(' + g.c.join(',') + ')'
+			'top': (y*12) + 'px'
 		});
 		
 		// Change the bubble
@@ -513,7 +517,7 @@ var party = party || {};
 			visible_tiles = data.tiles;
 			newest_tiles = data.newest_tiles;
 			total_positions = objectLength(visible_tiles);
-			state.total_tiles = (party.state.last_page * total_positions);
+			state.total_tiles = parseInt(party.state.last_page * total_positions, 10);
 			
 			// Draw the mosaic!
 			initialDraw();
@@ -570,6 +574,11 @@ var party = party || {};
 			pos = new_tile.position;
 			// Check if we should keep the visible or hidden tile from this position
 			// depending on which is the most recent
+			if (!visible_tiles[pos] || !hidden_tiles[pos]) {
+				new_tiles.shift();
+				return;
+			}
+			
 			if (visible_tiles[pos].id > hidden_tiles[pos].id){
 				$.extend(hidden_tiles[pos], old_visible);
 			}
@@ -682,13 +691,22 @@ var party = party || {};
 
 $(document).ready(function() {
 	
+	// Language chooser
+	$('#flang').change(function(){
+		window.location = '/' + $(this).val();
+	});
+	
+	// Tweet popup window
+	$('#twitter-counter > dl > dt > a').click(function(){
+		var w = 500,
+			h = 550,
+			l = (window.screen.width - w)/2,
+			t = (window.screen.height - h)/2;
+		window.open($(this).attr('href'), 'tweet', 'left=' + l + ',top=' + t + ',width=' + w + ',height=' + h + ',toolbar=0,resizable=1');
+		return false;
+	});
+
 	// Let's get it started!
 	party.init();
-
-	// Resize listener
-	// $(window).resize(function() {
-	// 	console.log('resizing');
-	// 	party.state.mosaic_offset = party.canvas.offset();
-	// });
 	
 });

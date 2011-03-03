@@ -3,7 +3,7 @@
  * @package    Firefox 4 Twitter Party
  * @subpackage front-end
  * @version    v.0.1
- * @author     Andre Torgal <andre@quodis.com>, Leo Xavier <leo@quodis.com>, Leihla Pinho <leihla@quodis.com>, Luis Abreu <luis@quodis.com>
+ * @author     Andre Torgal <andre@quodis.com>, Leo Xavier <leo@quodis.com>, Leihla Pinho <leihla@quodis.com>, Luis Abreu <luis@quodis.com>, Bruno Abrantes <bruno@quodis.com>
  * @license    http://www.opensource.org/licenses/bsd-license.php BSD License
  */
 
@@ -89,12 +89,12 @@ function main($language)
 				<aside id="main-content" class="clearfix">
 
 					<!-- Here goes the text explaining how Firefox Twitter Party works. -->
-					<p><?= sprintf(_('Be part of Team Firefox! Tweet about Firefox 4 with the %s hashtag and your avatar will join thousands of others from around the world as part of our logo mosaic.'), '<span class="hashtag">' . $config['Twitter']['terms'] . '</span>') ?></p>
+					<p><?= sprintf(_('Be part of Team Firefox! Tweet about Firefox 4 with the %s hashtag and your avatar will join thousands of others from around the world as part of our logo mosaic.'), '<span class="hashtag">#fx4</span>') ?></p>
 
 					<div id="twitter-counter" class="clearfix">
 						<dl>
-							<dt><a href="http://twitter.com/share?related=firefox&text=<?= urlencode(_('Join me at the Firefox 4 Twitter Party and celebrate the newest version')) ?>" title="<?= _('Tweet') ?>" rel="external"><?= _('Tweet') ?></a></dt>
-							<dd><span>-</span></dd>
+							<dt><a href="http://twitter.com/share?url=http://twitterparty.mozilla.org&via=firefox&related=firefox&text=<?= urlencode(_('Join me at the Firefox 4 Twitter Party and celebrate the newest version #fx4 #teamfirefox')) ?>" title="<?= _('Tweet') ?>" rel="external"><?= _('Tweet') ?></a></dt>
+							<dd><span></span></dd>
 						</dl>
 					</div><!-- twitter-counter -->
 
@@ -197,7 +197,8 @@ function main($language)
 						<label for="flang">Other Languages</label>
 
 						<select id="flang" name="flang">
-							<option value="af">Afrikaans</option>
+							<option value="en-US">English (US)</option>
+							<option value="pt-PT">Português (Europeu)</option>
 						</select>
 
 					</form>
@@ -211,7 +212,7 @@ function main($language)
 		<script type="text/javascript">
 		//<![CDATA[
 		(function($) {
-			$.extend(party, <?=json_encode($uiOptions)?>);
+		  $.extend(party, <?=json_encode($uiOptions)?>);
 		})(jQuery);
 		//]]>
 		</script>

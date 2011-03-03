@@ -14,9 +14,10 @@ function main()
 {
 	DEFINE('CLIENT', 'ajax');
 	DEFINE('CONTEXT', __FILE__);
-	include '../bootstrap.php';
+	include '../../bootstrap.php';
 
-	dd($_REQUEST);
+	Debug::setLogMsgFile($config['App']['pathLog'] .'/dashboard.msg.log');
+	Debug::setLogErrorFile($config['App']['pathLog'] .'/dashboard.error.log');
 
 	$userId = (isset($_REQUEST['user_id'])) ? $_REQUEST['user_id'] : null;
 
@@ -24,6 +25,8 @@ function main()
 
 	$ok = $result->success();
 	$msg = $ok ? 'OK' : 'FAIL';
+
+	Debug::logMsg('delete user:' . $userId . ' msg:' . $msg);
 
 	Dispatch::now($ok, $msg);
 

@@ -30,6 +30,9 @@ function main($language)
 	include '../bootstrap.php';
 	session_cache_limiter("nocache");
 
+	Debug::setLogMsgFile($config['App']['pathLog'] .'/dashboard.msg.log');
+	Debug::setLogErrorFile($config['App']['pathLog'] .'/dashboard.error.log');
+
 	// mosaic config file
 	$jsMosaicConfig = $config['Store']['url'] . $config['UI']['js-config']['grid'];
 
@@ -64,6 +67,7 @@ function main($language)
 
 		<!-- scripts -->
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+		<script type="text/javascript" src="/assets/js/global.js?>"></script>
 		<script type="text/javascript" src="<?=$config['UI']['js']['general']?>"></script>
 		<script type="text/javascript" src="<?=$jsMosaicConfig?>"></script>
 		<!--[if lt IE 9]><script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
@@ -112,10 +116,19 @@ function main($language)
 
 				</aside><!-- main-content -->
 
+
 				<section id="mosaic" role="img">
 					<h2><?= _('Firefox Twitter Mosaic') ?></h2>
 
-					<p id="loading"></p>
+          <ul id="loading">
+            <li><?= _('Sorting guest list alphabetically') ?></li>
+            <li><?= _('Randomizing seating order') ?></li>
+            <li><?= _('Cooling drinks to optimal temperature') ?></li>
+            <li><?= _('Handing out name tags') ?></li>
+            <li><?= _('Waxing the dance floor') ?></li>
+            <li><?= _('Setting up Firefox deco') ?></li>
+          </ul>
+
 					<img src="" id="tile-hover" />
 
 					<article id="bubble" class="bubble">
@@ -136,7 +149,7 @@ function main($language)
 					</article><!-- bubble template -->
 
 				</section>
-				
+
 			</div><!-- wrapper -->
 
 			<div id="mozilla-badge">
@@ -177,18 +190,18 @@ function main($language)
 					<p><?= _('Except where otherwise <a href="http://www.mozilla.com/about/legal.html#site">noted</a>, content on this site is licensed under the <br /><a href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution Share-Alike License v3.0</a> or any later version.') ?></p>
 				</div><!-- footer-left -->
 
-				<div id="footer-right"> 
+				<div id="footer-right">
 
 					<form id="lang_form" dir="ltr" method="get">
-						
-						<label for="flang">Other Languages</label> 
-			
-						<select id="flang" name="flang">    
-							<option value="af">Afrikaans</option> 
+
+						<label for="flang">Other Languages</label>
+
+						<select id="flang" name="flang">
+							<option value="af">Afrikaans</option>
 						</select>
-					
+
 					</form>
-					
+
 				</div> <!-- footer-right -->
 
 			</div><!-- footer-copyright -->

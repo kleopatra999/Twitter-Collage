@@ -16,14 +16,26 @@ function main()
 	DEFINE('CONTEXT', __FILE__);
 	include '../bootstrap.php';
 
-	$id = (isset($_REQUEST['id'])) ? $_REQUEST['id'] : null;
+	$userName = (isset($_REQUEST['user_name'])) ? $_REQUEST['user_name'] : null;
 
-	$result = Tweet::delete($id);
+	$result = Tweet::getByUserName($userName, $config['UI']['resultsLimit'], TRUE);
 
-	$ok = $result->success();
-	$msg = $ok ? 'OK' : 'FAIL';
+	// init response
 
-	Dispatch::now($ok, $msg);
+	$data = array(
+		'tiles' => array(),
+		'total' => $result->total(),
+		'count' => $result->count()
+	);
+
+	while ($tweet = $result->row())
+	{
+		$data['tiles'][] = $tweet;
+	}
+
+	Debug::logMsg('userName:' . $userName . ' count:' . $data['count'] . ' total:' . $data['total']);
+
+	Dispatch::now(1, 'OK', $data);
 
 } // main()
 

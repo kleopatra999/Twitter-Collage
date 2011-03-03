@@ -1,6 +1,6 @@
 /**
  * Firefox 4 Twitter Party
- * by Mozilla, Quodis © 2011
+ * Design and development by Mozilla, Quodis
  * http://www.mozilla.com
  * http://www.quodis.com
  * 
@@ -46,8 +46,7 @@ var party = party || {};
 		},
 		
 		
-		// stores ongoing requests (indexed by id) to prevent obsoletes ... see
-		// load()
+		// stores ongoing requests (indexed by id) to prevent obsoletes ... see load
 		load_requests : { },
 		
 		// borrow from party (hey, who let this guy in?)
@@ -108,10 +107,6 @@ var party = party || {};
 			}.bind(this) );
 			
 			// bind poll
-			$('#force-poll-bttn').click( function(ev) {
-				ev.stopPropagation();
-				this.poll();
-			}.bind(this) );
 			$('#mosaic').mousemove( function(ev) {
 				if ($('body').hasClass('shade')) return;
 				var offset = $('#mosaic').offset();
@@ -139,7 +134,7 @@ var party = party || {};
 			
 			// stat timer
 			this.state.short_stat_interval = window.setInterval( function() {
-				this.load('/stat-short.php', null, function(data) {
+				this.load('/dashboard/stat-short.php', null, function(data) {
 					if (!data) return;
 					$.extend(this.state, data);
 					$('#tweet-count span').rollNumbers(this.state.tweet_count, this.options.short_stat_interval);
@@ -170,7 +165,10 @@ var party = party || {};
 				if (!count) {
 					$('<li id="loading" class="empty">empty page...</li>').appendTo('#mosaic');
 				}
-			}.bind(this), 'page:' . page);
+			}.bind(this), 'page', function() { 
+				$('#loading').remove();
+				$('<li id="loading">not found</li>').appendTo('#mosaic');
+			} ) ;
 		},
 
 		poll : function()
@@ -187,7 +185,7 @@ var party = party || {};
 				'last_id' : this.state.last_id
 			}
 
-			Dashboard.load( 'poll.php', params, function(data) {
+			Dashboard.load('/poll.php', params, function(data) {
 				$('#loading').remove();
 				var count = this.addTiles(data.tiles);
 				if (count) {
@@ -307,7 +305,7 @@ var party = party || {};
 			
 			$('<li id="loading">searching users...</li>').appendTo('#mosaic');
 			
-			this.load('/users-by-terms.php', {'terms' : user_name}, function(data) {
+			this.load('/dashboard/users-by-terms.php', {'terms' : user_name}, function(data) {
 				
 				$('#loading').remove();
 				
@@ -365,7 +363,7 @@ var party = party || {};
 			}.bind(this) );
 			
 			// load
-			this.load('/tweets-by-username.php', {'user_name' : name}, function(data) {
+			this.load('/dashboard/tweets-by-username.php', {'user_name' : name}, function(data) {
 				
 				$('#loading').remove();
 				
@@ -400,7 +398,7 @@ var party = party || {};
 			
 			$('<li id="loading">searching tweets...</li>').appendTo('#mosaic');
 			
-			this.load('/tweets-by-terms.php', {'terms' : terms}, function(data) {
+			this.load('/dashboard/tweets-by-terms.php', {'terms' : terms}, function(data) {
 				
 				$('#loading').remove();
 				
@@ -438,11 +436,11 @@ var party = party || {};
 		},
 		
 		deleteTweet : function(id, callback) {
-			this.post('tweet-delete.php', { 'id' : id }, callback )
+			this.post('/dashboard/tweet-delete.php', { 'id' : id }, callback )
 		},
 		
 		deleteUser : function(id, callback) {
-			this.post('user-delete.php', { 'user_id' : id}, callback )
+			this.post('/dashboard/user-delete.php', { 'user_id' : id}, callback )
 		},
 
 		// ---- ajax helpers
@@ -458,7 +456,7 @@ var party = party || {};
 		 * @param function callback
 		 * @param string id
 		 */
-		load : function(url, params, callback, id) 
+		load : function(url, params, callback, id, errorCallback) 
 		{
 			// generate a new key for this request?
 			var request_key = null;
@@ -489,7 +487,10 @@ var party = party || {};
 					}
 				}.bind(this),
 				error: function() {
-					this.loadError(arguments);
+					if ("function" == typeof errorCallback) {
+						errorCallback(arguments);
+					}
+					else this.loadError(arguments);
 				}.bind(this)
 			});
 		},
@@ -498,7 +499,7 @@ var party = party || {};
 		{
 			console.log('load fail, error:', arguments);
 			$('#loading').remove();
-			$('<li id="loading">...error...</li>').appendTo('#mosaic');
+			$('<li id="loading">not found</li>').appendTo('#mosaic');
 		},
 		
 		post : function(url, params, callback, noFeedback) 
@@ -585,16 +586,6 @@ var party = party || {};
 		}
 
 	});
-
-
-	/**
-	 * mock support for window.console
-	 */
-	if (!window.console || !window.console.log) {
-		window.console = {};
-		window.console.log = function(whatever) {};
-		window.console.dir = function(whenever) {};
-	}
 
 
 	$.fn.extend( {
@@ -941,78 +932,3 @@ var party = party || {};
 	});
 })(jQuery);
 
-
-/**
- * http://james.padolsey.com/javascript/create-a-tinyurl-with-jsonp/
- * 
- * @param string longUrl
- * @param function successCallback
- */
-function getTinyUrl(longUrl, success) 
-{
-	var api = 'http://json-tinyurl.appspot.com/?url=';
-	var apiUrl = api + encodeURIComponent(longUrl) + '&callback=?';
-	
-	$.getJSON(apiUrl, function(data){
-		success && success(data.tinyurl);
-	});
-}
-
-
-/**
- * NOTE: jQuery handling of scroll position has poor bruwser-compatibility
- * borrowed from
- * http://www.softcomplex.com/docs/get_window_size_and_scrollbar_position.html
- * 
- * @return integer
- */
-function f_scrollLeft() 
-{
-	return f_filterResults (
-		window.pageXOffset ? window.pageXOffset : 0,
-		document.documentElement ? document.documentElement.scrollLeft : 0,
-		document.body ? document.body.scrollLeft : 0
-	);
-}
-/**
- * NOTE: jQuery handling of scroll position has poor bruwser-compatibility
- * borrowed from
- * http://www.softcomplex.com/docs/get_window_size_and_scrollbar_position.html
- * 
- * @return integer
- */
-function f_scrollTop() 
-{
-	return f_filterResults (
-		window.pageYOffset ? window.pageYOffset : 0,
-		document.documentElement ? document.documentElement.scrollTop : 0,
-		document.body ? document.body.scrollTop : 0
-	);
-}
-/**
- * borrowed from
- * http://www.softcomplex.com/docs/get_window_size_and_scrollbar_position.html
- */
-function f_clientWidth() 
-{
-	return f_filterResults (
-		window.innerWidth ? window.innerWidth : 0,
-		document.documentElement ? document.documentElement.clientWidth : 0,
-		document.body ? document.body.clientWidth : 0
-	);
-}
-function f_clientHeight() 
-{
-	return f_filterResults (
-		window.innerHeight ? window.innerHeight : 0,
-		document.documentElement ? document.documentElement.clientHeight : 0,
-		document.body ? document.body.clientHeight : 0
-	);
-}
-function f_filterResults(n_win, n_docel, n_body) 
-{
-	var n_result = n_win ? n_win : 0;
-	if (n_docel && (!n_result || (n_result > n_docel)))
-		n_result = n_docel;
-	return n_body && (!n_result || (n_result > n_body)) ? n_body : n_result;
-}

@@ -14,7 +14,10 @@ function main()
 {
 	DEFINE('CLIENT', 'ajax');
 	DEFINE('CONTEXT', __FILE__);
-	include '../bootstrap.php';
+	include '../../bootstrap.php';
+
+	Debug::setLogMsgFile($config['App']['pathLog'] .'/dashboard.msg.log');
+	Debug::setLogErrorFile($config['App']['pathLog'] .'/dashboard.error.log');
 
 	$lastTweet = Mosaic::getLastTweet();
 	$lastProcessedTweet = Mosaic::getLastTweetWithImage();
@@ -31,6 +34,8 @@ function main()
 			'seconds' => $elapsed
 		)
 	);
+
+	Debug::logMsg('stat-short, last_page:' . $data['last_page'] . ' tweet_count:' . $data['tweet_count']);
 
 	Dispatch::now(1, 'OK', $data);
 

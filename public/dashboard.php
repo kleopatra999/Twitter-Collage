@@ -24,6 +24,9 @@ function main()
 	include '../bootstrap.php';
 	session_cache_limiter("nocache");
 
+	Debug::setLogMsgFile($config['App']['pathLog'] .'/dashboard.msg.log');
+	Debug::setLogErrorFile($config['App']['pathLog'] .'/dashboard.error.log');
+
 	$isOldBrowser = isset($_GET['oldBrowser']);
 
 	// body classes
@@ -75,7 +78,6 @@ function main()
 		<meta name="distribution" content="global" />
 
 		<!-- stylesheets -->
-		<link href="assets/css/reset.css" type="text/css" rel="stylesheet" />
 		<link rel="stylesheet" href="<?=$config['UI']['css']['main']?>" type="text/css" media="screen, projection" />
 		<link rel="stylesheet" href="<?=$config['UI']['css']['mosaic']?>" type="text/css" media="screen, projection" />
 		<link rel="stylesheet" href="<?=$config['UI']['css']['dashboard']?>" type="text/css" media="screen, projection" />
@@ -86,6 +88,7 @@ function main()
 
 		<!-- scripts -->
 		<script type="text/javascript" src="/assets/js/jquery-1.4.2.min.js"></script>
+		<script type="text/javascript" src="/assets/js/global.js?>"></script>
 		<script type="text/javascript" src="<?=$config['UI']['js']['dashboard']?>"></script>
 		<script type="text/javascript" src="<?=$jsMosaicConfig?>"></script>
 		<!--[if lt IE 9]><script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script><![endif]-->

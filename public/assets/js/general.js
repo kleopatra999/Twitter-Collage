@@ -1,18 +1,20 @@
+/**
+ * Firefox 4 Twitter Party
+ * Design and development by Mozilla, Quodis
+ * http://www.mozilla.com
+ * http://www.quodis.com
+ * 
+ * Licensed under a Creative Commons Attribution Share-Alike License v3.0 http://creativecommons.org/licenses/by-sa/3.0/ 
+ */
 var party = party || {};
-
-Array.prototype.shuffle = function (){ 
-	for(var rnd, tmp, i=this.length; i; rnd=parseInt(Math.random()*i, 10), tmp=this[--i], this[i]=this[rnd], this[rnd]=tmp);
-};
 
 (function () {
 	var initial_draw_timer,
 		loading_message_timer,
 		polling_timer,
-		loading_message_index,
 		tile_counter = 0,
 		auto_bubble_timer,
 		auto_bubble_index = 0,
-		frame_counter = 0,
 		visible_tiles = {},
 		visible_tiles_random = [],
 		hidden_tiles = {},
@@ -39,7 +41,8 @@ Array.prototype.shuffle = function (){
 			last_page: 0,
 			mosaic_offset: {},
 			initial_tiles_per_frame_incremental: 1,
-			draw_new_tiles_every_counter: 0
+			draw_new_tiles_every_counter: 0,
+			total_tiles: 0
 		},
 		available_performances = {
 			high: {
@@ -59,43 +62,12 @@ Array.prototype.shuffle = function (){
 			}
 		};
 	
-	/**
-	 * NOTE: jQuery handling of scroll position has poor bruwser-compatibility
-	 * borrowed from
-	 * http://www.softcomplex.com/docs/get_window_size_and_scrollbar_position.html
-	 * 
-	 * @return integer
-	 */
-	function f_scrollLeft() 
-	{
-	    return f_filterResults (	
-	        window.pageXOffset ? window.pageXOffset : 0,
-	        document.documentElement ? document.documentElement.scrollLeft : 0,
-	        document.body ? document.body.scrollLeft : 0
-	    );
-	}
-	/**
-	 * NOTE: jQuery handling of scroll position has poor bruwser-compatibility
-	 * borrowed from
-	 * http://www.softcomplex.com/docs/get_window_size_and_scrollbar_position.html
-	 * 
-	 * @return integer
-	 */
-	function f_scrollTop() 
-	{
-	    return f_filterResults (
-	        window.pageYOffset ? window.pageYOffset : 0,
-	        document.documentElement ? document.documentElement.scrollTop : 0,
-	        document.body ? document.body.scrollTop : 0
-	    );
-	}
-	
-	function f_filterResults(n_win, n_docel, n_body) 
-	{
-	    var n_result = n_win ? n_win : 0;
-	    if (n_docel && (!n_result || (n_result > n_docel)))
-	        n_result = n_docel;
-	    return n_body && (!n_result || (n_result > n_body)) ? n_body : n_result;
+	function create_urls(input) {
+		return input
+		.replace(/(ftp|http|https|file):\/\/([\S]+(\b|$))/gim, '<a href="$&" class="my_link" target="_blank">$2</a>')
+		.replace(/([^\/])(www[\S]+(\b|$))/gim, '$1<a href="http://$2" class="my_link" target="_blank">$2</a>')
+		.replace(/(^|\s)@(\w+)/g, '$1<a href="http://twitter.com/$2" class="my_link" target="_blank">@$2</a>')
+		.replace(/(^|\s)#(\S+)/g, '$1<a href="http://search.twitter.com/search?q=%23$2" class="my_link" target="_blank">#$2</a>');
 	}
 	
 	function tileHtml(tile) {
@@ -122,14 +94,17 @@ Array.prototype.shuffle = function (){
 	function initialDraw() {
 		
 		// Create an array for the random order
-		var i;
+		var i,
+			f;
 		for (i = 0; i < total_positions; i += 1) {
 			visible_tiles_random.push(i);
 		}
-		// Randomnize!
+		// Randomize!
 		visible_tiles_random.shuffle();
 		// Calculate the number of frames
-		counter.increment = parseInt(total_positions/party.performance.initial_frames_per_second, 10);
+		f = parseInt(total_positions/party.performance.initial_frames_per_second, 10);
+		// Calculate the counter increment on each frame
+		counter.increment = parseInt(state.total_tiles/f);
 		// Start the recursive call for each frame
 		initial_draw_timer = window.setInterval(initialDrawFrame, (1000/party.performance.initial_frames_per_second) );
 	}
@@ -164,15 +139,13 @@ Array.prototype.shuffle = function (){
 			// Update counter
 			counter.current += counter.increment;
 			setCounter();
-			// Another frame completed
-			frame_counter += 1;
 			
 		} else {
 			
 			// No Tiles were built - task is complete
 			window.clearInterval(initial_draw_timer);
 			// Set counter to last id
-			counter.current = parseInt(state.last_id, 10);
+			counter.current = parseInt(state.total_tiles, 10);
 			setCounter();
 			startAutoBubble();
 			// Start the recursive "tile updater"
@@ -186,28 +159,26 @@ Array.prototype.shuffle = function (){
 		counter.canvas.text(counter.current);
 	}
 	
-	// Iterate through the loading messages
-	function loadingMessage() {
-		
-		// Set the loading text
-		$('#loading').text(party.loading_messages[loading_message_index]);
-		
-		// Advance in the array - if at the end, restart
-		loading_message_index += 1;
-		if (loading_message_index >= party.loading_messages.length) {
-			loading_message_index = 0;
-		}
-		
-	}
 	
-	// Randomnize and show the loading message
+	
+	// Randomize and show the loading message
 	function loadingShow() {
+		var loading_messages = $.makeArray($('#loading li')),
+			loading_message_index = 0,
+			loadingMessage;
+			
+		loading_messages.shuffle();
 		
-		// Show the loading DOM element
-		$('#loading').show();
-		
-		// Set a random first loading message
-		loading_message_index = Math.floor(Math.random() * party.loading_messages.length);
+		// Iterate through the loading messages
+		loadingMessage = function() {
+			// Advance in the array - if at the end, restart
+			$(loading_messages[loading_message_index]).hide();
+			loading_message_index += 1;
+			if (loading_message_index >= loading_messages.length) {
+				loading_message_index = 0;
+			}
+			$(loading_messages[loading_message_index]).show();
+		}
 		
 		// Loop through the array
 		loadingMessage();
@@ -217,8 +188,8 @@ Array.prototype.shuffle = function (){
 	
 	// Hide the loading message
 	function loadingHide(){
-		$('#loading').hide();
 		window.clearInterval(loading_message_timer);
+		$('#loading').remove();
 	}
 	
 	
@@ -261,14 +232,15 @@ Array.prototype.shuffle = function (){
         party.canvas.bind('mousemove', function(ev) {
             var x,
 				y,
-				pos;
+				pos,
+				offset = party.canvas.offset();
 			
 			if (state.keep_bubble_open) {
 				return;
 			}
 			
-			x = Math.ceil((ev.clientX + f_scrollLeft() - state.mosaic_offset.left) / 12) - 1;
-			y = Math.ceil((ev.clientY + f_scrollTop() - state.mosaic_offset.top) / 12) - 1;
+			x = Math.ceil((ev.clientX + f_scrollLeft() - offset.left) / 12) - 1;
+			y = Math.ceil((ev.clientY + f_scrollTop() - offset.top) / 12) - 1;
             if (x < 0 || y < 0) {
 				return;
 			}
@@ -335,41 +307,48 @@ Array.prototype.shuffle = function (){
 		  	// Show loading
 			$('#search-box button').addClass('loading');
 			// Request server
-			var url = '/tweets-by-username.php?user_name=' + search.input_dom.val();
-			$.getJSON(url, function(data) {
-				var new_tile,
-					pos;
-				// Hide Loading
-				$('#search-box button').removeClass('loading');
-				
-				if (data.payload.total == 0) {
-					// No results!
-					$('#search-box .error').fadeIn('fast');
-					window.setTimeout(function(){
-						$('#search-box .error').fadeOut('fast');
-					}, 3 * 1000);
-					return;
-				}
-				
-				// Found a result
-				new_tile = data.payload.tweets[0];
-				pos = new_tile.position;
-				// Check if we should keep the visible or hidden tile from this position
-				// depending on which is the most recent
-				if (visible_tiles[pos].id > hidden_tiles[pos].id){
-					$.extend(hidden_tiles[pos], visible_tiles[pos]);
-				}
-				// Write the new tile over the visible
-				$.extend(visible_tiles[pos], new_tile);
-				// Show and persist it!
-				stopAutoBubble();
-				state.keep_bubble_open = true;
-				showBubble(pos);
-
+			$.ajax({
+				url: '/tiles-by-username.php',
+				type: 'GET',
+				dataType: 'json',
+				data: {user_name: search.input_dom.val()},
+				success: processSearchResult
 			});
 			
 			return false;
 		});
+	}
+	
+	
+	function processSearchResult(data){
+		var new_tile,
+			pos;
+		// Hide Loading
+		$('#search-box button').removeClass('loading');
+
+		if (data.payload.total == 0) {
+			// No results!
+			$('#search-box .error').fadeIn('fast');
+			window.setTimeout(function(){
+				$('#search-box .error').fadeOut('fast');
+			}, 3 * 1000);
+			return;
+		}
+
+		// Found a result
+		new_tile = data.payload.tiles[0];
+		pos = new_tile.position;
+		// Check if we should keep the visible or hidden tile from this position
+		// depending on which is the most recent
+		if (visible_tiles[pos].id > hidden_tiles[pos].id){
+			$.extend(hidden_tiles[pos], visible_tiles[pos]);
+		}
+		// Write the new tile over the visible
+		$.extend(visible_tiles[pos], new_tile);
+		// Show and persist it!
+		stopAutoBubble();
+		state.keep_bubble_open = true;
+		showBubble(pos);
 	}
 	
 	function showAutoBubble() {
@@ -479,7 +458,7 @@ Array.prototype.shuffle = function (){
 		b.username_a.text(tile.userName).attr('href', 'http://twitter.com/' + tile.userName);
 		b.avatar_a.attr('title', tile.userName).attr('href', 'http://twitter.com/' + tile.userName);
 		b.avatar_img.attr('src', tile.imageUrl);
-		b.p.text(tile.contents);
+		b.p.html(create_urls(tile.contents));
 		b.time_a.attr('href', 'http://twitter.com/' + tile.userName + '/status/' + tile.twitterId).text(tile.createdDate);
 		b.time.attr('datetime', tile.createdDate);
 		b.container.css(position_css).removeClass().addClass('bubble ' + position_class + ' color-' + g.r);
@@ -495,16 +474,6 @@ Array.prototype.shuffle = function (){
 		state.keep_bubble_open = false;
 		party.bubble.container.hide();
 		tile_hover.hide();
-	}
-	
-	// Get an object's length
-	function objectLength(obj) {
-		var length = 0,
-			key;
-	    for (key in obj) {
-	        if (obj.hasOwnProperty(key)) length += 1;
-	    }
-	    return length;
 	}
 	
 	// Reload the whole page
@@ -544,6 +513,7 @@ Array.prototype.shuffle = function (){
 			visible_tiles = data.tiles;
 			newest_tiles = data.newest_tiles;
 			total_positions = objectLength(visible_tiles);
+			state.total_tiles = (party.state.last_page * total_positions);
 			
 			// Draw the mosaic!
 			initialDraw();
@@ -690,13 +660,6 @@ Array.prototype.shuffle = function (){
 	
 	
 	$.extend(party, {
-		"loading_messages": [
-			"Sorting guest list alphabetically",
-			"Waiting for eye-contact with club bouncer",
-			"Randomnizing seating-order",
-			"Syncing disco-lights to the beat",
-			"Cooling drinks to ideal temperature",
-			"Handing out name-tags"],
 		"loading_message_seconds": 2,
 		"polling_timer_seconds": 40, 
 		"auto_bubble_seconds": 7,
@@ -723,8 +686,9 @@ $(document).ready(function() {
 	party.init();
 
 	// Resize listener
-	$(window).resize(function() {
-		party.state.mosaic_offset = party.canvas.offset();
-	});
+	// $(window).resize(function() {
+	// 	console.log('resizing');
+	// 	party.state.mosaic_offset = party.canvas.offset();
+	// });
 	
 });

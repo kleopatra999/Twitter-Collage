@@ -1,11 +1,20 @@
+#
+# Firefox 4 Twitter Party
+#
+# For deployment in a single server, assuming: 
+# - mysql and memcache are local
+# - url is http://twitterparty.mozilla.org 
+# - deployment path is /servers/prod/twitterparty
+# - data path is /servers/data/twitterparty
+#
 App:
     # path    
     path: /servers/prod/twitterparty
     pathLog: /var/log/twitterparty
     # url
-    url: http://dev.twitterparty.quodis.com
+    url: http://twitterparty.mozilla.org
 Store:
-    url: http://dev.twitterparty.quodis.com/store
+    url: http://twitterparty.mozilla.org/store
     path: /servers/develop/twitterparty/public/store
     filePermissions: 644
     dirPermissions: 755
@@ -35,7 +44,7 @@ Mosaic:
     rows: 47
     tileSize: 12
     colorDepth: 12
-    internalComposite: 1
+    internalComposite: 0
 Jobs:
     twitter-search:
         period: 10
@@ -71,12 +80,6 @@ Db:
               write:
                   <<: *connectionDefaults
                   mode: _modeWrite
-          installConnection:
-              <<: *connectionDefaults
-              name: 
-              mode: _modeWrite
-              user: install
-              pass: install
 UI:
     gaEnabled: "0"
     gaId: ""
@@ -96,4 +99,4 @@ UI:
     pollLimit: 100
     resultsLimit: 100
     options:
-        store_url: http://dev.twitterparty.quodis.com/store
+        store_url: http://twitterparty.mozilla.org/store

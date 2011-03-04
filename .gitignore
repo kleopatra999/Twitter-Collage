@@ -10,5 +10,5 @@ Thumbs.db
 logs/
 xfers/
 .vagrant
-config/config.php
+config/*config.php
 config/config.yaml

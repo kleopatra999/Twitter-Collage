@@ -14,6 +14,7 @@ function main()
 {
 	DEFINE('CLIENT', 'ajax');
 	DEFINE('CONTEXT', __FILE__);
+	DEFINE('VALIDATETOKEN', 'ajax');
 	include '../../bootstrap.php';
 
 	Debug::setLogMsgFile($config['App']['pathLog'] .'/dashboard.msg.log');
@@ -37,7 +38,7 @@ function main()
 		$data['tweets'][] = $tweet;
 	}
 
-	Debug::logMsg('userName:' . $userName . ' count:' . $data['count'] . ' total:' . $data['total']);
+	Debug::logMsg('userName:' . rawurlencode($userName) . ' count:' . $data['count'] . ' total:' . $data['total']);
 
 	Dispatch::now(1, 'OK', $data);
 

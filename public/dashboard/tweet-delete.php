@@ -14,6 +14,7 @@ function main()
 {
 	DEFINE('CLIENT', 'ajax');
 	DEFINE('CONTEXT', __FILE__);
+	DEFINE('VALIDATETOKEN', 'ajax');
 	include '../../bootstrap.php';
 
 	Debug::setLogMsgFile($config['App']['pathLog'] .'/dashboard.msg.log');
@@ -24,7 +25,7 @@ function main()
 	$ok = Tweet::delete($id);
 	$msg = $ok ? 'OK' : 'FAIL';
 
-	Debug::logMsg('delete tweet:' . $id . ' msg:' . $msg);
+	Debug::logMsg('delete tweet:' . rawurlencode($id) . ' msg:' . $msg);
 
 	Dispatch::now($ok, $msg);
 

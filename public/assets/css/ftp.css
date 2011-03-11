@@ -308,17 +308,15 @@ footer a:hover {
 	color:#33559b;
 	font-size:22px;
 	line-height:22px;
-	height:100px;
 	display:table;
 	overflow: hidden;
-	#position: relative;
 }
 
 #sub-footer h3 span{
 	display: table-cell;
 	vertical-align: middle;
 	text-align: center;
-	#position: absolute; 
+	height:70px;
 }
 
 #sub-footer h3 em{
@@ -571,6 +569,7 @@ footer a:hover {
 	filter:progid:DXImageTransform.Microsoft.gradient( startColorstr='#f0f7fc',  endColorstr='#ffffff', GradientType=0 );
 	border: 1px solid #87b7dd;
 	-moz-border-radius: 5px; border-radius: 5px;
+	box-sizing: content-box;
 	color:#6f7fA3;
 	display: block;
 	float:left;
@@ -607,8 +606,8 @@ footer a:hover {
 	padding-top: 15px;
 	width: 260px;
 	position: absolute;
-	bottom: 10px;
-	z-index: 20;
+	top: 80px;
+	z-index: 50;
 	display: none;
 }
 
@@ -743,6 +742,3 @@ a.download-link:hover, a.download-link:active {
 	background:url(../images/layout/download-arrow.png) 100% 50% no-repeat;
 	text-decoration: none;
 }
-
-
-

@@ -22,6 +22,8 @@ var party = party || {};
 	*/
 	var initial_draw_timer,
 		loading_message_timer,
+		loading_indicator_timer,
+		loading_indicator_milliseconds = 200,
 		polling_timer,
 		tile_counter = 0,
 		auto_bubble_timer,
@@ -58,19 +60,22 @@ var party = party || {};
 		},
 		performance_settings = {
 			high: {
-				initial_frames_per_second: 24,
-				initial_tiles_per_frame: 10,
-				new_tiles_per_second: 8
+				initial_frames_per_second: 8,
+				initial_tiles_per_frame: 40,
+				new_tiles_per_second: 8,
+				pause_after: 10 // Minutes
 			},
 			medium: {
-				initial_frames_per_second: 12,
-				initial_tiles_per_frame: 20,
-				new_tiles_per_second: 4
+				initial_frames_per_second: 4,
+				initial_tiles_per_frame: 80,
+				new_tiles_per_second: 6,
+				pause_after: 10 // Minutes
 			},
 			low: {
 				initial_frames_per_second: 1,
 				initial_tiles_per_frame: 200,
-				new_tiles_per_second: 1
+				new_tiles_per_second: 1,
+				pause_after: 10 // Minutes
 			}
 		};
 	
@@ -93,13 +98,14 @@ var party = party || {};
 		
 		// Cache the tile's position
 		position = tile.p;
-		index = party.mosaic.index[position];
+		index = [12,12];
 		if (!index) {
 		  return '';
 		}
 		
 		// Add it to the HTML to draw
-		return '<div class="tile" id="' + position + '" style="background-image:url(data:image/gif;base64,' + tile.d + '); left: ' + (index[0]*12) + 'px; top: ' + (index[1]*12) + 'px;"></div>';
+		//return '<div class="tile" id="' + position + '" style="background-image:url(data:image/gif;base64,' + tile.d + '); left: ' + (index[0]*12) + 'px; top: ' + (index[1]*12) + 'px;"></div>';
+		return '<div class="tile" id="' + position + '" style="background-image:url(http://dev2.twitterparty.quodis.com/store/mosaic.jpg); background-position:-' + (index[0]*12) + 'px -' + (index[1]*12) + 'px; left: ' + (index[0]*12) + 'px; top: ' + (index[1]*12) + 'px;"></div>';
 		
 	}
 	
@@ -128,14 +134,19 @@ var party = party || {};
 		var tiles_to_draw = "",
 			i = 0,
 			j = 0,
-			p;
+			p,
+			inc = 0;
 		
 		// Next time draw one tile more towards initial_tiles_per_frame
 		if (state.initial_tiles_per_frame_incremental < party.performance.initial_tiles_per_frame) {
-			state.initial_tiles_per_frame_incremental  += 0.02;
+			state.initial_tiles_per_frame_incremental += 0.02;
+			inc = (counter.increment/(party.performance.initial_tiles_per_frame/state.initial_tiles_per_frame_incremental));
+		} else {
+			inc = counter.increment;
 		}
 		
-		j = (tile_counter + state.initial_tiles_per_frame_incremental);
+		//j = (tile_counter + state.initial_tiles_per_frame_increment);
+		j = (tile_counter + party.performance.initial_tiles_per_frame);
 		
 		// Draw tiles_per_frame tiles and draw them
 		for (i = tile_counter; i < j; i += 1) {
@@ -150,21 +161,20 @@ var party = party || {};
 			// Draw the tiles and proceed
 			party.canvas.append(tiles_to_draw);
 			// Update counter
-			if (counter.current < state.total_tiles) {
-				counter.current += counter.increment;
-				setCounter();
-			}
+			counter.current += inc;
+			setCounter();
 			
 		} else {
 			
 			// No Tiles were built - task is complete
 			window.clearInterval(initial_draw_timer);
+			// Remove the grid
+			party.canvas.css('background', 'none');
 			// Set counter to last id
 			counter.current = parseInt(state.total_tiles, 10);
 			setCounter();
 			startAutoBubble();
-			// Start the recursive "tile updater"
-			draw_tiles_timer = window.setInterval(drawNewTiles, (1000/party.performance.new_tiles_per_second));
+			startDrawNewTiles();
 		}
 		
 	}
@@ -180,7 +190,11 @@ var party = party || {};
 	function loadingShow() {
 		var loading_messages = $.makeArray($('#loading li')),
 			loading_message_index = 0,
-			loadingMessage;
+			loadingMessage,
+			loading_indicator_frames = 5,
+			loading_indicator_index = 0,
+			loading_indicator = $('#loading'),
+			loadingIndicator;
 			
 		loading_messages.shuffle();
 		
@@ -195,36 +209,35 @@ var party = party || {};
 			$(loading_messages[loading_message_index]).show();
 		}
 		
-		// Loop through the array
+		// Animate the loading sprite
+		loadingIndicator = function() {
+			loading_indicator.css('background-position', -(loading_indicator_index*240) + 'px 0px');
+			loading_indicator_index += 1;
+			if (loading_indicator_index >= loading_indicator_frames) {
+				loading_indicator_index = 0;
+			}
+		}
+		
+		// Loop through the messages
 		loadingMessage();
 		loading_message_timer = window.setInterval(loadingMessage, (party.loading_message_seconds * 1000));
 		
+		// Start the sprite animation
+		loadingIndicator();
+		loading_indicator_timer = window.setInterval(loadingIndicator, loading_indicator_milliseconds);
 	}
 	
 	// Hide the loading message
 	function loadingHide(){
 		window.clearInterval(loading_message_timer);
+		window.clearInterval(loading_indicator_timer);
 		$('#loading').remove();
 	}
 	
 	
 	// First to be called
 	function init() {
-		var bubble,
-		    imgsToPreload = [
-		        'assets/images/layout/bubble-light-blue.png',
-		        'assets/images/layout/bubble-dark-blue.png',
-		        'assets/images/layout/bubble-yellow.png',
-		        'assets/images/layout/bubble-dark-orange.png'
-		    ];
-		
-		//Bubble image preloading
-		for (var i=imgsToPreload.length; i--; ) {
-		    (function(){
-		        var img = new Image();
-		        img.src = imgsToPreload[i];
-		    })();
-		}
+		var bubble;
 		
 		// Check the browser's performance
 		party.performance = party.performance_settings.high;
@@ -234,6 +247,7 @@ var party = party || {};
 			// Remove the download button if this is already firefox >= 4
 			if (window.navigator.userAgent.search('Firefox/4') != -1) {
 				$('#download').remove();
+				//party.performance = party.performance_settings.medium;
 			}
 		}
 		
@@ -334,6 +348,10 @@ var party = party || {};
 		party.bubble.container.bind('mouseleave', function() {
 		    party.canvas.trigger('click');
 		});
+		
+		party.init = function() {
+		    return party;
+		}
 	}
 	
 	function searchInit() {
@@ -497,14 +515,6 @@ var party = party || {};
 		
 		// Hide previous
 		b.container.hide();
-		tile_hover.hide();
-		
-		// Create a fake "zoomed tile" element
-		tile_hover.attr('src', 'data:image/gif;base64,' + tile.d);
-		tile_hover.css({
-			'left': (x*12) + 'px',
-			'top': (y*12) + 'px'
-		});
 		
 		// Localize stuff
 		formatted_date = date(party.l10n.date_format, tile.c);
@@ -515,21 +525,29 @@ var party = party || {};
 		b.p.html(create_urls(tile.n));
 		b.time_a.attr('href', 'http://twitter.com/' + tile.u + '/status/' + tile.w).text(formatted_date);
 		b.time.attr('datetime', formatted_date);
-		b.avatar_img.hide();
+		b.avatar_img.attr('src', '').hide();
 		b.container.css(position_css).removeClass().addClass('bubble ' + position_class + ' color-' + g.r);
 		
 		//Show the image on a small timeout window
+		
 		party.showBubbleImageTimer = setTimeout(function(){
 		    b.avatar_img.attr('src', tile.m);
 		    b.avatar_img.load(function(){
 		        $(this).fadeIn('fast');
 		    })
 		    party.showBubbleImageTimer = null;
+		    tile = null;
 		}, 500);
+		
+		// Position the selected tile element
+		tile_hover.css({
+			'left': (x*12) + 'px',
+			'top': (y*12) + 'px',
+			'border-color': colors[g.r]
+		});
 		
 		// Show
 		b.container.show();
-		tile_hover.show();
 		
 	}
 	
@@ -556,15 +574,15 @@ var party = party || {};
 		
 		// Check if we have a complete page. If not, try again later
 		if (party.state.last_page == 0) {
-			setTimeout(reloadPage, 60 * 1000);
+			setTimeout(reloadPage, 3 * 60 * 1000);
 			return;
 		}
 		
 		// Show the loading
 		loadingShow();
-		
+
 		// Request URL
-		var url = party.store_url + '/pages/page_' + party.state.last_page + '.json';
+		var url = party.store_url + '/mosaic.json';
 		
 		// Get the first visible page from server
 		$.getJSON(url, function(data) {
@@ -607,15 +625,19 @@ var party = party || {};
 		});
 	}
 	
+	function startDrawNewTiles() {
+		draw_tiles_timer = window.setInterval(drawNewTiles, (1000/party.performance.new_tiles_per_second));
+	}
+	
 	function drawNewTiles() {
-		
 		// Get a random position
 		var pos,
 			new_tile,
 			idx,
 			grid,
 			css_changes,
-			last_tile;
+			last_tile,
+			$last_tile_dom;
 
 		// Priority to new tiles
 		if (state.draw_new_tiles_every_counter >= state.draw_new_tiles_every) {
@@ -627,7 +649,7 @@ var party = party || {};
 		
 		if (new_tile) {
 			// Get the position
-			pos = parseInt(new_tile.p);
+			pos = parseInt(new_tile.p, 10);
 			if (!visible_tiles[pos]) {
 				new_tiles.shift();
 				return;
@@ -635,8 +657,11 @@ var party = party || {};
 			
 			// Update the CSS
 			css_changes = {
-				'background-image': 'url(data:image/gif;base64,' + new_tile.d + ')'
+				'background-image': 'url(data:image/gif;base64,' + new_tile.d + ')',
+				'background-position': '0px 0px'
 			};
+			// Remember that this does not exist on the initial sprite
+			new_tile.base64_only = true;
 			// Write the new tile over the visible
 			$.extend(visible_tiles[pos], new_tile);
 			// Store this to the newest tiles to autoplay
@@ -661,17 +686,26 @@ var party = party || {};
 
 		// Update the previous tile
 		if (state.last_tile_drawn_pos > -1) {
-			$('#' + state.last_tile_drawn_pos).css({
-				'background-image': 'url(data:image/gif;base64,' + visible_tiles[state.last_tile_drawn_pos].d + ')'
-			});
+			last_tile = visible_tiles[state.last_tile_drawn_pos];
+			$last_tile_dom = $('#' + state.last_tile_drawn_pos);
+			if (last_tile.base64_only) {
+				$last_tile_dom.css({
+					'background-image': 'url(data:image/gif;base64,' + last_tile.d + ')',
+					'background-position': '0px 0px'
+				});
+			} else {
+				$last_tile_dom.css({
+					'background-image': 'url(http://dev2.twitterparty.quodis.com/store/mosaic.jpg)',
+					'background-position': '-' + $last_tile_dom.css('left') + ' -' + $last_tile_dom.css('top')
+				});
+			}
 		}
 		
 		// Save the previous tile
 		state.last_tile_drawn_pos = pos;
 		
 		// Update the new tile
-		$('#' + pos).css(css_changes);
-		
+		$('#' + pos).css(css_changes);		
 	}
 	
 	// Start the Real-time polling
@@ -681,6 +715,10 @@ var party = party || {};
 		poll();
 		polling_timer = window.setInterval(poll, (party.polling_timer_seconds * 1000));
 		
+		// End the polling after 10 minutes?
+		if (window.location.href.indexOf('keepgoing') < 0) {
+			window.setTimeout(pause, party.performance.pause_after * 60 * 1000);
+		}
 	}
 	
 	function poll() {
@@ -725,8 +763,8 @@ var party = party || {};
 	function pause() {
 		window.clearInterval(draw_tiles_timer);
 		window.clearInterval(polling_timer);
+		stopAutoBubble();
 	}
-
 	
 	/**
 	 * public, enable dashboard ui
@@ -734,7 +772,9 @@ var party = party || {};
 	 * @return
 	 */
 	function resume() {
+		startDrawNewTiles();
 		startPolling();
+		startAutoBubble();
 	}
 	
 	
@@ -756,6 +796,19 @@ var party = party || {};
 	});
 	
 }());
+
+
+// Preload important stuff
+imgsToPreload = [
+    'assets/images/layout/bubbles.png',
+	'http://dev2.twitterparty.quodis.com/store/mosaic.jpg'
+];
+for (var i=imgsToPreload.length; i--; ) {
+	(function(){
+	    var img = new Image();
+	    img.src = imgsToPreload[i];
+	})();
+}
 
 
 $(document).ready(function() {

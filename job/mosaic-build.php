@@ -22,35 +22,22 @@ function main()
 
 	$period = $config['Jobs']['mosaic-build']['period'];
 
-	$pageSize = Mosaic::getPageSize();
-
-	$lastProcessedTs = null;
-
 	while (TRUE)
 	{
 		// start time
 		$start = time();
 
-		// get all pages
-		$pages = Mosaic::getProcessedPages($lastProcessedTs);
+		$numTiles = Mosaic::updateMosaic();
 
-		foreach ($pages as $pageNo)
-		{
-			// update page
-			$tweetCount = Mosaic::updatePage($pageNo);
-
-			Debug::logMsg('OK! ... updated page:' . $pageNo . ' ... page has ' . $tweetCount . ' tweets');
-
-			$lastProcessedTs = time();
-		}
+		Debug::logMsg('OK! ... updated mosaic. number of tiles:' . $numTiles);
 
 		// sleep?
 		$elapsed = time() - $start;
 		$sleep = $period - $elapsed;
 		if ($sleep < 1) $sleep = 1;
-		sleep($sleep);
 
-		Debug::logMsg('OK! ... sleeping for ' . $sleep . ' seconds ...');
+		Debug::logMsg('OK! ... took ' . $elapsed . ' seconds, sleeping for ' . $sleep . ' seconds ...');
+		sleep($sleep);
 	}
 
 } // main()

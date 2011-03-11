@@ -14,6 +14,7 @@ function main()
 {
 	DEFINE('CLIENT', 'ajax');
 	DEFINE('CONTEXT', __FILE__);
+	DEFINE('VALIDATETOKEN', 'ajax');
 	include '../../bootstrap.php';
 
 	Debug::setLogMsgFile($config['App']['pathLog'] .'/dashboard.msg.log');
@@ -25,7 +26,7 @@ function main()
 
 	$msg = $ok ? 'OK' : 'FAIL';
 
-	Debug::logMsg('delete user:' . $userName . ' msg:' . $msg);
+	Debug::logMsg('delete user:' . rawurlencode($userName) . ' msg:' . $msg);
 
 	Dispatch::now($ok, $msg);
 

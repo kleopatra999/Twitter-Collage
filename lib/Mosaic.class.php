@@ -89,7 +89,7 @@ class Mosaic
 		if (!isset(self::$_pageConfig))
 		{
 			// declares $config
-			$json = file_get_contents(self::_getPageConfigFileName());
+			$json = file_get_contents(self::_getConfigFileName());
 
 			if (!$json) throw new Exception('could not load page config');
 
@@ -179,7 +179,7 @@ class Mosaic
 	 */
 	public static function saveConfig()
 	{
-		$fileName = self::_getPageConfigFileName();
+		$fileName = self::_getConfigFileName();
 
 		file_put_contents($fileName, json_encode(self::$_pageConfig));
 		chmod($fileName, octdec(self::$_config['Config']['filePermissions']));
@@ -218,28 +218,7 @@ class Mosaic
 			}
 		}
 
-		$contents = '/**
- * Firefox 4 Twitter Party
- * by Mozilla, Quodis © 2011
- * http://www.mozilla.com
- * http://www.quodis.com
- *
- * Licensed under a Creative Commons Attribution Share-Alike License v3.0 http://creativecommons.org/licenses/by-sa/3.0/
- */
-
-/**
- * data file generated: ' . date('Y-m-d H:i:s') . '
- */
-
-/**
- * party.mosaic.grid = array of rows
- *   row - { 23: cell, ... } // index is column index
- *   cell - { c: [r,g,b], x: 34, y: 23, i: 1} // i = position
- * party.mosaic.index = array of pos
- *   pos - {x: 34, y: 23}
- */
-party.mosaic = ' . json_encode($js) . ';
-';
+		$contents = 'party.mosaic = ' . json_encode($js) . ';';
 
 		file_put_contents($fileName, $contents);
 		chmod($fileName, octdec(self::$_config['Store']['filePermissions']));
@@ -253,14 +232,13 @@ party.mosaic = ' . json_encode($js) . ';
 
 
 	/**
-	 * updates this page file, returns number of tweets
+	 * updates the most recent and complete page to a json file
 	 *
-	 * @param $pageNo
-	 *
-	 * @return $tweets;
+	 * @return integer page number
 	 */
-	public static function updatePage($pageNo)
+	public static function updateMosaic()
 	{
+		$pageNo = Tweet::getLastCompletePage(self::getPageSize());
 		$result = Tweet::getByPage($pageNo, 0, TRUE);
 
 		$fileData = array(
@@ -288,53 +266,20 @@ party.mosaic = ' . json_encode($js) . ';
 			$fileData['last_id'] = $lastId;
 		}
 
-		$fileName = self::getPageDataFileName($pageNo);
+		// save jpeg file
+		$fileName = self::getImageFileName();
+		$image = Image::makeMosaic(self::$_config['Mosaic']['cols'], self::$_config['Mosaic']['rows'], self::$_pageConfig['index'], $tiles);
+		$image->writeImage($fileName);
+		chmod($fileName, octdec(self::$_config['Store']['filePermissions']));
+		chgrp($fileName, self::$_config['Store']['group']);
 
+		// save js file
+		$fileName = self::getDataFileName();
 		file_put_contents($fileName, json_encode($fileData));
 		chmod($fileName, octdec(self::$_config['Store']['filePermissions']));
 		chgrp($fileName, self::$_config['Store']['group']);
 
 		return count($fileData['tiles']);
-	}
-
-
-	/**
-	 * updates this page file, returns number of tweets
-	 *
-	 * @param $pageNo
-	 *
-	 * @return $tweets;
-	 */
-	public static function purgePage($pageNo)
-	{
-		// delete from filesys
-		$command = 'rm ' . self::getPageDataFileName($pageNo);
-		shell_exec($command);
-	}
-
-
-	/**
-	 *
-	 * @param $pageNo
-	 */
-	public static function pageExists($pageNo)
-	{
-		return file_exists(self::getPageDataFileName($pageNo));
-	}
-
-	/**
-	 *
-	 * @param $pageNo
-	 *
-	 * @return array;
-	 */
-	public static function getPageData($pageNo)
-	{
-		if (!self::pageExists($pageNo)) return array();
-
-		$filename = self::getPageDataFileName($pageNo);
-
-		return json_decode(file_get_contents($filename), TRUE);
 	}
 
 
@@ -492,20 +437,35 @@ party.mosaic = ' . json_encode($js) . ';
 	/**
 	 * @return string
 	 */
-	private static function _getPageConfigFileName()
+	private static function _getConfigFileName()
 	{
 		return self::$_config['App']['path'] . '/' . self::$_config['Mosaic']['configFile'];
 	}
 
 
 	/**
-	 * @param integer $pageNo
-	 *
 	 * @return string
 	 */
-	public static function getPageDataFileName($pageNo)
+	public static function getDataFileName()
 	{
-		$filename = self::$_config['Store']['path'] . '/pages/page_' . $pageNo . '.json';
+		$filename = self::$_config['Store']['path'] . '/mosaic.json';
+
+		if (!is_dir(dirname($filename)))
+		{
+			rmkdir(dirname($filename), self::$_config['Store']['dirPermissions'], self::$_config['Store']['group']);
+		}
+
+		return $filename;
+	}
+
+
+
+	/**
+	 * @return string
+	 */
+	public static function getImageFileName()
+	{
+		$filename = self::$_config['Store']['path'] . '/mosaic.jpg';
 
 		if (!is_dir(dirname($filename)))
 		{

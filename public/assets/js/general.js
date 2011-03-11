@@ -89,23 +89,32 @@ var party = party || {};
 	
 	function tileHtml(tile) {
 		var position,
-			index;
+			index,
+			element;
 			
 		// Make sure this is an existing data entry
 		if (!tile) {
-		  return '';
+		  return null;
 		}
 		
 		// Cache the tile's position
 		position = tile.p;
-		index = [12,12];
+		index = party.mosaic.index[position];
 		if (!index) {
-		  return '';
+		  return null;
 		}
 		
+		element = document.createElement('div');
+		element.setAttribute('id', position);
+		element.style.backgroundImage = 'url(http://dev2.twitterparty.quodis.com/store/mosaic.jpg)';
+		element.style.backgroundPosition = '-' + (index[0]*12) + 'px -' + (index[1]*12) + 'px';
+		element.style.left = (index[0]*12) + 'px';
+		element.style.top = (index[1]*12) + 'px';
+		
+		return element;
 		// Add it to the HTML to draw
 		//return '<div class="tile" id="' + position + '" style="background-image:url(data:image/gif;base64,' + tile.d + '); left: ' + (index[0]*12) + 'px; top: ' + (index[1]*12) + 'px;"></div>';
-		return '<div class="tile" id="' + position + '" style="background-image:url(http://dev2.twitterparty.quodis.com/store/mosaic.jpg); background-position:-' + (index[0]*12) + 'px -' + (index[1]*12) + 'px; left: ' + (index[0]*12) + 'px; top: ' + (index[1]*12) + 'px;"></div>';
+		//return '<div class="tile" id="' + position + '" style="; background-position: left: ' + ; top: ' +  + 'px;"></div>';
 		
 	}
 	
@@ -131,38 +140,38 @@ var party = party || {};
 	// Construct each frame for the initial draw
 	function initialDrawFrame() {
 		
-		var tiles_to_draw = "",
+		var tiles_to_draw = [],
 			i = 0,
 			j = 0,
-			p,
-			inc = 0;
-		
-		// Next time draw one tile more towards initial_tiles_per_frame
-		if (state.initial_tiles_per_frame_incremental < party.performance.initial_tiles_per_frame) {
-			state.initial_tiles_per_frame_incremental += 0.02;
-			inc = (counter.increment/(party.performance.initial_tiles_per_frame/state.initial_tiles_per_frame_incremental));
-		} else {
-			inc = counter.increment;
-		}
-		
+			new_tile = null,
+			append_tiles = false,
+			p;
+				
 		//j = (tile_counter + state.initial_tiles_per_frame_increment);
 		j = (tile_counter + party.performance.initial_tiles_per_frame);
 		
 		// Draw tiles_per_frame tiles and draw them
 		for (i = tile_counter; i < j; i += 1) {
 			p = visible_tiles_random[i];
-			tiles_to_draw = tiles_to_draw + tileHtml(visible_tiles[p]);
+			new_tile = tileHtml(visible_tiles[p]);
+			if (new_tile) {
+				tiles_to_draw.push(new_tile);
+				append_tiles = true;
+			}
 		}
 		tile_counter = i;
 		
 		// Check if anything to draw was processed
-		if (tiles_to_draw) {
+		if (append_tiles) {
 
 			// Draw the tiles and proceed
-			party.canvas.append(tiles_to_draw);
+			//console.log(tiles_to_draw);
+			party.canvas.append('', tiles_to_draw);
 			// Update counter
-			counter.current += inc;
-			setCounter();
+			if (counter.current < state.total_tiles) {
+				counter.current += counter.increment;
+				setCounter();
+			}
 			
 		} else {
 			
